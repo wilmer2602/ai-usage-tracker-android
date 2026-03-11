@@ -9,7 +9,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.*
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -36,13 +36,12 @@ fun AvatarView(
 
     val aiLevel = maxOf(visualScore, languageScore, motorScore) / 100f
 
-    // Choose image resource based on angle
+    // Choose image
     val imageRes = when (angle) {
         FaceAngle.FRONT -> if (aiLevel > 0.5f) R.drawable.avatar_mech_front else R.drawable.avatar_real_front
         FaceAngle.SIDE -> if (aiLevel > 0.5f) R.drawable.avatar_mech_side else R.drawable.avatar_real_side
     }
 
-    // Painter for the base image
     val painter = painterResource(id = imageRes)
 
     Canvas(
@@ -59,71 +58,63 @@ fun AvatarView(
         val center = Offset(size.width / 2, size.height / 2)
         val imgSize = min(size.width, size.height)
 
+        // Draw image
         withTransform({
             translate(center.x, center.y)
             rotate(rotation)
             scale(scale, scale)
             translate(-imgSize / 2, -imgSize / 2)
         }) {
-            // Draw base image
-            drawImage(
-                image = painter.image,
+            drawPicture(
+                picture = painter.picture,
                 srcOffset = androidx.compose.ui.geometry.IntOffset(0, 0),
                 srcSize = androidx.compose.ui.geometry.IntSize(painter.intrinsicSize.width.toInt(), painter.intrinsicSize.height.toInt()),
                 dstOffset = androidx.compose.ui.geometry.IntOffset.Zero,
-                dstSize = androidx.compose.ui.geometry.IntSize(imgSize.toInt(), imgSize.toInt()),
-                alpha = 1f
+                dstSize = androidx.compose.ui.geometry.IntSize(imgSize.toInt(), imgSize.toInt())
             )
         }
 
-        // Overlay brain effect (semi-transparent)
-        val brainAlpha = (aiLevel * 0.7f).coerceIn(0f, 0.7f)
-        if (brainAlpha > 0.1f) {
+        // Brain overlay (semi-transparent)
+        val alpha = (aiLevel * 0.7f).coerceIn(0f, 0.7f)
+        if (alpha > 0.05f) {
             withTransform({
                 translate(center.x, center.y)
                 rotate(rotation)
                 scale(scale, scale)
                 translate(-imgSize / 2, -imgSize / 2)
             }) {
-                // Brain region (upper back)
-                val brainRect = Rect(imgSize * 0.1f, imgSize * 0.1f, imgSize * 0.8f, imgSize * 0.6f)
-                drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF00FFFF).copy(alpha = brainAlpha * 0.6f),
-                            Color(0xFF00FFFF).copy(alpha = brainAlpha * 0.2f)
-                        )
-                    ),
-                    topLeft = Offset(brainRect.left, brainRect.top),
-                    size = Size(brainRect.width, brainRect.height),
-                    cornerRadius = CornerRadius(imgSize * 0.15f)
+                // Upper back area
+                val left = imgSize * 0.15f
+                val top = imgSize * 0.1f
+                val width = imgSize * 0.7f
+                val height = imgSize * 0.5f
+                drawRect(
+                    color = Color(0xFF00FFFF).copy(alpha = alpha * 0.5f),
+                    topLeft = Offset(left, top),
+                    size = Size(width, height)
                 )
-
-                // Circuit lines if AI high
+                // Circuit lines if AI > 0.5
                 if (aiLevel > 0.5f) {
-                    val lineColor = if (aiLevel > 0.8f) Color.Magenta.copy(alpha = brainAlpha) else Color.Cyan.copy(alpha = brainAlpha)
-                    val steps = 5
+                    val lineColor = if (aiLevel > 0.8f) Color.Magenta.copy(alpha = alpha) else Color.Cyan.copy(alpha = alpha)
+                    val steps = 4
                     for (i in 1..steps) {
-                        val y = brainRect.top + brainRect.height * i / (steps + 1)
+                        val y = top + height * i / (steps + 1)
                         drawLine(
                             color = lineColor,
-                            start = Offset(brainRect.left + brainRect.width * 0.15f, y),
-                            end = Offset(brainRect.left + brainRect.width * 0.85f, y),
+                            start = Offset(left + width * 0.1f, y),
+                            end = Offset(left + width * 0.9f, y),
                             strokeWidth = 2f
                         )
                     }
                 }
-
-                // Processor block
+                // Processor block if AI > 0.85
                 if (aiLevel > 0.85f) {
-                    val procSize = imgSize * 0.2f
-                    val procLeft = imgSize * 0.4f
-                    val procTop = imgSize * 0.3f
+                    val procSize = imgSize * 0.15f
                     drawRoundRect(
-                        color = Color(0xFFFFD700).copy(alpha = brainAlpha),
-                        topLeft = Offset(procLeft, procTop),
+                        color = Color(0xFFFFD700).copy(alpha = alpha),
+                        topLeft = Offset(imgSize * 0.425f, imgSize * 0.35f),
                         size = Size(procSize, procSize),
-                        cornerRadius = CornerRadius(6f)
+                        cornerRadius = CornerRadius(4f)
                     )
                 }
             }
