@@ -16,7 +16,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlin.math.*
 
-internal enum class FaceAngle { FRONT, SIDE }
+internal enum class FaceAngle(val value: Int) { FRONT(0), SIDE(1) }
 
 @Composable
 fun AvatarView(
@@ -25,8 +25,13 @@ fun AvatarView(
     languageScore: Int,
     motorScore: Int,
     modifier: Modifier = Modifier,
-    faceAngle: FaceAngle = FaceAngle.FRONT
+    faceAngle: Int = 0
 ) {
+    val angle = when (faceAngle) {
+        0 -> FaceAngle.FRONT
+        1 -> FaceAngle.SIDE
+        else -> FaceAngle.FRONT
+    }
     var scale by remember { mutableFloatStateOf(1f) }
     var rotation by remember { mutableFloatStateOf(0f) }
 
