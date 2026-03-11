@@ -16,7 +16,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlin.math.*
 
-private enum class FaceAngle { FRONT, SIDE }
+internal enum class FaceAngle { FRONT, SIDE }
 
 @Composable
 fun AvatarView(
