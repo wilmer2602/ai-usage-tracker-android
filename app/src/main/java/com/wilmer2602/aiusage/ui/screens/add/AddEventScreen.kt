@@ -34,8 +34,15 @@ fun AddEventScreen(
     val types = listOf("READING", "VIDEO", "AI_TOOL", "CLI", "BROWSER", "DISCUSSION", "OTHER")
     var selectedType by remember { mutableStateOf(types.first()) }
 
-    var appName by remember { mutableStateOf("") }
-    var toolName by remember { mutableStateOf("") }
+    var toolExpanded by remember { mutableStateOf(false) }
+    val tools = listOf("ChatGPT", "Claude", "Gemini", "Kimi", "Copilot", "其他")
+    var selectedTool by remember { mutableStateOf(tools.first()) }
+    var customTool by remember { mutableStateOf("") }
+
+    var modeExpanded by remember { mutableStateOf(false) }
+    val modes = listOf("Chat", "Generate", "Search", "Code", "Analyze", "Other")
+    var selectedMode by remember { mutableStateOf(modes.first()) }
+
     var duration by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
 
@@ -59,9 +66,7 @@ fun AddEventScreen(
                     readOnly = true,
                     label = { Text("类型") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
                 )
                 ExposedDropdownMenu(
                     expanded = typeExpanded,
@@ -79,28 +84,78 @@ fun AddEventScreen(
                 }
             }
 
-            OutlinedTextField(
-                value = appName,
-                onValueChange = { appName = it },
-                label = { Text("应用名称 (可选)") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = toolName,
-                onValueChange = { toolName = it },
-                label = { Text("AI 工具名称 (如 ChatGPT, Claude)") },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Tool dropdown
+            ExposedDropdownMenuBox(
+                expanded = toolExpanded,
+                onExpandedChange = { toolExpanded = !toolExpanded }
+            ) {
+                OutlinedTextField(
+                    value = if (selectedTool == "其他") customTool else selectedTool,
+                    onValueChange = { 
+                        if (selectedTool == "其他") customTool = it
+                    },
+                    readOnly = selectedTool != "其他",
+                    label = { Text("AI 工具") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = toolExpanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = toolExpanded,
+                    onDismissRequest = { toolExpanded = false }
+                ) {
+                    tools.forEach { tool ->
+                        DropdownMenuItem(
+                            text = { Text(tool) },
+                            onClick = {
+                                selectedTool = tool
+                                if (tool != "其他") customTool = ""
+                                toolExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Mode dropdown
+            ExposedDropdownMenuBox(
+                expanded = modeExpanded,
+                onExpandedChange = { modeExpanded = !modeExpanded }
+            ) {
+                OutlinedTextField(
+                    value = selectedMode,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("使用方式") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modeExpanded) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = modeExpanded,
+                    onDismissRequest = { modeExpanded = false }
+                ) {
+                    modes.forEach { mode ->
+                        DropdownMenuItem(
+                            text = { Text(mode) },
+                            onClick = {
+                                selectedMode = mode
+                                modeExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             OutlinedTextField(
                 value = duration,
                 onValueChange = { duration = it.filter { ch -> ch.isDigit() } },
                 label = { Text("时长 (分钟)") },
                 modifier = Modifier.fillMaxWidth()
             )
+
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("备注") },
+                label = { Text("备注 (可选)") },
                 modifier = Modifier.fillMaxWidth(),
                 maxLines = 3
             )
@@ -111,8 +166,7 @@ fun AddEventScreen(
             ) {
                 OutlinedButton(
                     onClick = {
-                        appName = ""
-                        toolName = ""
+                        customTool = ""
                         duration = ""
                         notes = ""
                     }
@@ -122,18 +176,17 @@ fun AddEventScreen(
                 Button(
                     onClick = {
                         val durationInt = duration.toIntOrNull() ?: 0
+                        val toolName = if (selectedTool == "其他") customTool.ifBlank { null } else selectedTool
                         val event = UsageEvent(
                             type = selectedType,
-                            appName = appName.ifBlank { null },
-                            toolName = toolName.ifBlank { null },
+                            appName = null,
+                            toolName = toolName,
                             timestamp = System.currentTimeMillis(),
                             durationMinutes = durationInt,
                             notes = notes.ifBlank { null }
                         )
                         viewModel.insertEvent(event)
-                        // Clear fields after insert
-                        appName = ""
-                        toolName = ""
+                        customTool = ""
                         duration = ""
                         notes = ""
                     },

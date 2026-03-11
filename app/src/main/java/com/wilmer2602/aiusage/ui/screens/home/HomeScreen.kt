@@ -65,11 +65,11 @@ fun EventCard(event: UsageEvent) {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(text = "类型: ${event.type}", style = MaterialTheme.typography.bodyMedium)
-            event.appName?.takeIf { it.isNotBlank() }?.let {
-                Text(text = "应用: $it", style = MaterialTheme.typography.bodySmall)
-            }
             event.toolName?.takeIf { it.isNotBlank() }?.let {
                 Text(text = "工具: $it", style = MaterialTheme.typography.bodySmall)
+            }
+            event.toolMode?.takeIf { it.isNotBlank() }?.let {
+                Text(text = "方式: $it", style = MaterialTheme.typography.bodySmall)
             }
             Text(text = "时间: ${dateFormat.format(Date(event.timestamp))}", style = MaterialTheme.typography.bodySmall)
             Text(text = "时长: ${event.durationMinutes} 分钟", style = MaterialTheme.typography.bodySmall)
