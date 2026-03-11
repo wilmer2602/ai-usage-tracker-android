@@ -58,7 +58,7 @@ fun AvatarView(
             scale(scale, scale)
             translate(-headWidth / 2, -headHeight / 2)
         }) {
-            when (faceAngle) {
+            when (angle) {
                 FaceAngle.FRONT -> drawFrontHead(aiLevel, headWidth, headHeight)
                 FaceAngle.SIDE -> drawSideHead(aiLevel, headWidth, headHeight)
             }
