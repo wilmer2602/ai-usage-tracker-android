@@ -59,17 +59,34 @@ fun HomeScreen(
 @Composable
 fun EventCard(event: UsageEvent) {
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+    val typeDisplay = mapOf(
+        "READING" to "阅读文章",
+        "VIDEO" to "观看视频",
+        "AI_TOOL" to "AI 工具",
+        "CLI" to "命令行",
+        "BROWSER" to "浏览器",
+        "DISCUSSION" to "讨论 AI",
+        "OTHER" to "其他"
+    )
+    val modeDisplay = mapOf(
+        "Chat" to "对话",
+        "Generate" to "生成",
+        "Search" to "搜索",
+        "Code" to "编码",
+        "Analyze" to "分析",
+        "Other" to "其他"
+    )
     Card(
         modifier = Modifier.padding(vertical = 8.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = "类型: ${event.type}", style = MaterialTheme.typography.bodyMedium)
+            Text(text = "类型: ${typeDisplay[event.type] ?: event.type}", style = MaterialTheme.typography.bodyMedium)
             event.toolName?.takeIf { it.isNotBlank() }?.let {
                 Text(text = "工具: $it", style = MaterialTheme.typography.bodySmall)
             }
             event.toolMode?.takeIf { it.isNotBlank() }?.let {
-                Text(text = "方式: $it", style = MaterialTheme.typography.bodySmall)
+                Text(text = "方式: ${modeDisplay[it] ?: it}", style = MaterialTheme.typography.bodySmall)
             }
             Text(text = "时间: ${dateFormat.format(Date(event.timestamp))}", style = MaterialTheme.typography.bodySmall)
             Text(text = "时长: ${event.durationMinutes} 分钟", style = MaterialTheme.typography.bodySmall)

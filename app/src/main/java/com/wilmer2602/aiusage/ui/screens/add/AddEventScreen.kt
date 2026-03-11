@@ -31,8 +31,10 @@ fun AddEventScreen(
     viewModel: UsageViewModel
 ) {
     var typeExpanded by remember { mutableStateOf(false) }
-    val types = listOf("READING", "VIDEO", "AI_TOOL", "CLI", "BROWSER", "DISCUSSION", "OTHER")
-    var selectedType by remember { mutableStateOf(types.first()) }
+    val typeOptions = listOf("阅读文章" to "READING", "观看视频" to "VIDEO", "AI 工具" to "AI_TOOL", "命令行" to "CLI", "浏览器" to "BROWSER", "讨论 AI" to "DISCUSSION", "其他" to "OTHER")
+    val typeDisplayToValue = typeOptions.associate { it.first to it.second }
+    val typeValueToDisplay = typeOptions.associate { it.second to it.first }
+    var selectedType by remember { mutableStateOf(typeOptions.first().second) }
 
     var toolExpanded by remember { mutableStateOf(false) }
     val tools = listOf("ChatGPT", "Claude", "Gemini", "Kimi", "Copilot", "其他")
@@ -40,8 +42,10 @@ fun AddEventScreen(
     var customTool by remember { mutableStateOf("") }
 
     var modeExpanded by remember { mutableStateOf(false) }
-    val modes = listOf("Chat", "Generate", "Search", "Code", "Analyze", "Other")
-    var selectedMode by remember { mutableStateOf(modes.first()) }
+    val modes = listOf("对话" to "Chat", "生成" to "Generate", "搜索" to "Search", "编码" to "Code", "分析" to "Analyze", "其他" to "Other")
+    val modeDisplayToValue = modes.associate { it.first to it.second }
+    val modeValueToDisplay = modes.associate { it.second to it.first }
+    var selectedMode by remember { mutableStateOf(modes.first().second) }
 
     var duration by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
@@ -53,7 +57,7 @@ fun AddEventScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("添加 AI 使用事件", style = MaterialTheme.typography.headlineSmall)
+            Text("添加事件", style = MaterialTheme.typography.headlineSmall)
 
             // Event type dropdown
             ExposedDropdownMenuBox(
@@ -61,7 +65,7 @@ fun AddEventScreen(
                 onExpandedChange = { typeExpanded = !typeExpanded }
             ) {
                 OutlinedTextField(
-                    value = selectedType,
+                    value = typeValueToDisplay[selectedType] ?: selectedType,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("类型") },
@@ -72,11 +76,11 @@ fun AddEventScreen(
                     expanded = typeExpanded,
                     onDismissRequest = { typeExpanded = false }
                 ) {
-                    types.forEach { type ->
+                    typeOptions.forEach { (display, value) ->
                         DropdownMenuItem(
-                            text = { Text(type) },
+                            text = { Text(display) },
                             onClick = {
-                                selectedType = type
+                                selectedType = value
                                 typeExpanded = false
                             }
                         )
@@ -122,7 +126,7 @@ fun AddEventScreen(
                 onExpandedChange = { modeExpanded = !modeExpanded }
             ) {
                 OutlinedTextField(
-                    value = selectedMode,
+                    value = modeValueToDisplay[selectedMode] ?: selectedMode,
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("使用方式") },
@@ -133,11 +137,11 @@ fun AddEventScreen(
                     expanded = modeExpanded,
                     onDismissRequest = { modeExpanded = false }
                 ) {
-                    modes.forEach { mode ->
+                    modes.forEach { (display, value) ->
                         DropdownMenuItem(
-                            text = { Text(mode) },
+                            text = { Text(display) },
                             onClick = {
-                                selectedMode = mode
+                                selectedMode = value
                                 modeExpanded = false
                             }
                         )
@@ -181,6 +185,7 @@ fun AddEventScreen(
                             type = selectedType,
                             appName = null,
                             toolName = toolName,
+                            toolMode = selectedMode,
                             timestamp = System.currentTimeMillis(),
                             durationMinutes = durationInt,
                             notes = notes.ifBlank { null }
