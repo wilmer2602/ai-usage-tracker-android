@@ -93,7 +93,7 @@ fun AddEventScreen(
             )
             OutlinedTextField(
                 value = duration,
-                onValueChange = { duration = it.filter { d -> d.all { ch -> ch.isDigit() } } },
+                onValueChange = { duration = it.filter { ch -> ch.isDigit() } },
                 label = { Text("时长 (分钟)") },
                 modifier = Modifier.fillMaxWidth()
             )
