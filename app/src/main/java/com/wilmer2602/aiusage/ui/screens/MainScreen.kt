@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -77,7 +78,7 @@ fun MainScreen(
     }
 }
 
-sealed class BottomNavItem(val route: String, val label: String, val icon: androidx.compose.ui.graphics.ImageVector) {
+sealed class BottomNavItem(val route: String, val label: String, val icon: ImageVector) {
     object Home : BottomNavItem("home", "记录", androidx.compose.material.icons.Icons.Filled.List)
     object Add : BottomNavItem("add", "添加", androidx.compose.material.icons.Icons.Filled.Add)
     object Stats : BottomNavItem("stats", "统计", androidx.compose.material.icons.Icons.Filled.BarChart)

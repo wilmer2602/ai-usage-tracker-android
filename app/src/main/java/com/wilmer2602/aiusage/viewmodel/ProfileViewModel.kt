@@ -18,7 +18,7 @@ class ProfileViewModel(private val repository: UsageRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            repository.allEvents.collect { events ->
+            repository.getAllEvents().collect { events ->
                 computeScores(events)
             }
         }

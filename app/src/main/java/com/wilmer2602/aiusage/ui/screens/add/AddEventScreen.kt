@@ -1,6 +1,6 @@
 package com.wilmer2602.aiusage.ui.screens.add
 
-import androidx.compose.foundation.layout.Arrangements
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -42,7 +42,7 @@ fun AddEventScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .padding(16.dp),
-            verticalArrangement = Arrangements.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("添加 AI 使用事件", style = MaterialTheme.typography.headlineSmall)
 
@@ -105,7 +105,7 @@ fun AddEventScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangements.End
+                horizontalArrangement = Arrangement.End
             ) {
                 OutlinedButton(
                     onClick = {
