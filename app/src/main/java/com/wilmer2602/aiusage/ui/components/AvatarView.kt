@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.*
@@ -23,13 +24,12 @@ fun AvatarView(
     audioScore: Int,
     languageScore: Int,
     motorScore: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    faceAngle: FaceAngle = FaceAngle.FRONT
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var rotation by remember { mutableFloatStateOf(0f) }
-    var angle by remember { mutableStateOf(FaceAngle.FRONT) } // toggle for demo
 
-    // Overall AI level (0..1) based on max of four scores
     val aiLevel = maxOf(visualScore, languageScore, motorScore) / 100f
 
     Canvas(
@@ -53,8 +53,7 @@ fun AvatarView(
             scale(scale, scale)
             translate(-headWidth / 2, -headHeight / 2)
         }) {
-            // Draw based on angle
-            when (angle) {
+            when (faceAngle) {
                 FaceAngle.FRONT -> drawFrontHead(aiLevel, headWidth, headHeight)
                 FaceAngle.SIDE -> drawSideHead(aiLevel, headWidth, headHeight)
             }
@@ -65,8 +64,6 @@ fun AvatarView(
 private fun DrawScope.drawFrontHead(aiLevel: Float, w: Float, h: Float) {
     val cx = w / 2
     val cy = h / 2
-    val rx = w / 2
-    val ry = h / 2
 
     // Head base (skin)
     drawOval(
@@ -116,7 +113,6 @@ private fun DrawScope.drawFrontHead(aiLevel: Float, w: Float, h: Float) {
     val mouthY = cy + h * 0.25f
     val mouthW = w * 0.3f
     val mouthH = h * 0.06f
-    // Simple line or ellipse
     drawOval(
         color = Color(0xFF8B5A2B),
         topLeft = Offset(cx - mouthW / 2, mouthY - mouthH / 2),
@@ -139,72 +135,59 @@ private fun DrawScope.drawFrontHead(aiLevel: Float, w: Float, h: Float) {
     val brainH = h * 0.8f
     val brainAlpha = (aiLevel * 0.8f).coerceIn(0f, 0.8f)
 
-    // Save layer for transparency
-    drawIntoCanvas { canvas ->
-        val paint = Paint().apply {
-            this.color = Color(0xFF00FFFF).copy(alpha = brainAlpha).toArgb()
-            style = PaintingStyle.Stroke
-            strokeWidth = 2f
-        }
-        // Brain outline
-        canvas.drawRoundRect(
-            Rect(brainLeft, brainTop, brainW, brainH),
-            CornerRadius(w * 0.2f).toRoundRect().cornerRadius,
-            paint
-        )
+    // Brain outline
+    drawRoundRect(
+        color = Color(0xFF00FFFF).copy(alpha = brainAlpha),
+        topLeft = Offset(brainLeft, brainTop),
+        size = Size(brainW, brainH),
+        cornerRadius = CornerRadius(w * 0.2f)
+    )
 
-        if (aiLevel > 0.4f) {
-            // Draw circuit lines inside
-            paint.strokeWidth = 1f
-            val steps = 5
-            for (i in 1..steps) {
-                val y = brainTop + brainH * i / (steps + 1)
-                paint.color = if (aiLevel > 0.7f) Color.Magenta.copy(alpha = brainAlpha).toArgb() else Color.Cyan.copy(alpha = brainAlpha).toArgb()
-                canvas.drawLine(
-                    Offset(brainLeft + brainW * 0.1f, y),
-                    Offset(brainLeft + brainW * 0.9f, y),
-                    paint
-                )
-                // Nodes
-                val nodeX1 = brainLeft + brainW * 0.2f
-                val nodeX2 = brainLeft + brainW * 0.8f
-                paint.style = PaintingStyle.Fill
-                canvas.drawCircle(nodeX1, y, 3f, paint)
-                canvas.drawCircle(nodeX2, y, 3f, paint)
-                paint.style = PaintingStyle.Stroke
-            }
-        }
-
-        if (aiLevel > 0.8f) {
-            // More mechanical: add processor block in center
-            paint.color = Color.Yellow.copy(alpha = brainAlpha).toArgb()
-            paint.strokeWidth = 2f
-            val procSize = min(brainW, brainH) * 0.3f
-            val procLeft = cx - procSize / 2
-            val procTop = cy - procSize / 2
-            canvas.drawRoundRect(
-                Rect(procLeft, procTop, procSize, procSize),
-                CornerRadius(8f).toRoundRect().cornerRadius,
-                paint
+    if (aiLevel > 0.4f) {
+        // Circuit lines inside
+        val steps = 5
+        for (i in 1..steps) {
+            val y = brainTop + brainH * i / (steps + 1)
+            val lineColor = if (aiLevel > 0.7f) Color.Magenta.copy(alpha = brainAlpha) else Color.Cyan.copy(alpha = brainAlpha)
+            drawLine(
+                color = lineColor,
+                start = Offset(brainLeft + brainW * 0.1f, y),
+                end = Offset(brainLeft + brainW * 0.9f, y),
+                strokeWidth = 1f
             )
+            // Nodes
+            val nodeX1 = brainLeft + brainW * 0.2f
+            val nodeX2 = brainLeft + brainW * 0.8f
+            drawCircle(lineColor, 3f, Offset(nodeX1, y))
+            drawCircle(lineColor, 3f, Offset(nodeX2, y))
         }
+    }
+
+    if (aiLevel > 0.8f) {
+        // Processor block in center
+        val procSize = min(brainW, brainH) * 0.3f
+        val procLeft = cx - procSize / 2
+        val procTop = cy - procSize / 2
+        drawRoundRect(
+            color = Color.Yellow.copy(alpha = brainAlpha),
+            topLeft = Offset(procLeft, procTop),
+            size = Size(procSize, procSize),
+            cornerRadius = CornerRadius(8f)
+        )
     }
 }
 
 private fun DrawScope.drawSideHead(aiLevel: Float, w: Float, h: Float) {
     val cx = w / 2
     val cy = h / 2
-    val rx = w / 2
-    val ry = h / 2
 
-    // Head silhouette (ellipse, but clipped side view)
-    // We'll draw a profile shape using path
+    // Head silhouette (profile shape)
     val path = Path().apply {
         // Start at chin
         moveTo(w * 0.3f, h * 0.8f)
         // Jaw up to ear
         lineTo(w * 0.2f, h * 0.6f)
-        // Back of head
+        // Back of head arc
         addArc(
             Rect(w * 0.15f, h * 0.1f, w * 0.85f, h * 0.7f),
             startAngleDegrees = 90f,
@@ -266,91 +249,86 @@ private fun DrawScope.drawSideHead(aiLevel: Float, w: Float, h: Float) {
     val brainH = h * 0.7f
     val brainAlpha = (aiLevel * 0.8f).coerceIn(0f, 0.8f)
 
-    drawIntoCanvas { canvas ->
-        val paint = Paint().apply {
-            this.color = Color(0xFF00FFFF).copy(alpha = brainAlpha).toArgb()
-            style = PaintingStyle.Stroke
-            strokeWidth = 2f
-        }
-        // Brain outline
-        canvas.drawRoundRect(
-            Rect(brainLeft, brainTop, brainW, brainH),
-            CornerRadius(w * 0.15f).toRoundRect().cornerRadius,
-            paint
-        )
-        if (aiLevel > 0.4f) {
-            paint.strokeWidth = 1f
-            val steps = 5
-            for (i in 1..steps) {
-                val y = brainTop + brainH * i / (steps + 1)
-                paint.color = if (aiLevel > 0.7f) Color.Magenta.copy(alpha = brainAlpha).toArgb() else Color.Cyan.copy(alpha = brainAlpha).toArgb()
-                canvas.drawLine(
-                    Offset(brainLeft + brainW * 0.15f, y),
-                    Offset(brainLeft + brainW * 0.85f, y),
-                    paint
-                )
-                val nodeX1 = brainLeft + brainW * 0.25f
-                val nodeX2 = brainLeft + brainW * 0.75f
-                paint.style = PaintingStyle.Fill
-                canvas.drawCircle(nodeX1, y, 3f, paint)
-                canvas.drawCircle(nodeX2, y, 3f, paint)
-                paint.style = PaintingStyle.Stroke
-            }
-        }
-        if (aiLevel > 0.8f) {
-            paint.color = Color.Yellow.copy(alpha = brainAlpha).toArgb()
-            paint.strokeWidth = 2f
-            val procSize = min(brainW, brainH) * 0.25f
-            val procLeft = cx - procSize / 2
-            val procTop = cy - procSize / 2 - h * 0.1f
-            canvas.drawRoundRect(
-                Rect(procLeft, procTop, procSize, procSize),
-                CornerRadius(6f).toRoundRect().cornerRadius,
-                paint
+    // Brain outline
+    drawRoundRect(
+        color = Color(0xFF00FFFF).copy(alpha = brainAlpha),
+        topLeft = Offset(brainLeft, brainTop),
+        size = Size(brainW, brainH),
+        cornerRadius = CornerRadius(w * 0.15f)
+    )
+
+    if (aiLevel > 0.4f) {
+        // Circuit lines
+        val steps = 5
+        for (i in 1..steps) {
+            val y = brainTop + brainH * i / (steps + 1)
+            val lineColor = if (aiLevel > 0.7f) Color.Magenta.copy(alpha = brainAlpha) else Color.Cyan.copy(alpha = brainAlpha)
+            drawLine(
+                color = lineColor,
+                start = Offset(brainLeft + brainW * 0.15f, y),
+                end = Offset(brainLeft + brainW * 0.85f, y),
+                strokeWidth = 1f
             )
+            val nodeX1 = brainLeft + brainW * 0.25f
+            val nodeX2 = brainLeft + brainW * 0.75f
+            drawCircle(lineColor, 3f, Offset(nodeX1, y))
+            drawCircle(lineColor, 3f, Offset(nodeX2, y))
         }
+    }
+
+    if (aiLevel > 0.8f) {
+        // Processor block
+        val procSize = min(brainW, brainH) * 0.25f
+        val procLeft = cx - procSize / 2
+        val procTop = cy - procSize / 2 - h * 0.1f
+        drawRoundRect(
+            color = Color.Yellow.copy(alpha = brainAlpha),
+            topLeft = Offset(procLeft, procTop),
+            size = Size(procSize, procSize),
+            cornerRadius = CornerRadius(6f)
+        )
     }
 }
 
 private fun DrawScope.drawHand(center: Offset, size: Float, aiLevel: Float) {
-    // Simple hand shape (oval palm + fingers)
-    val handPaint = Paint().apply {
-        color = if (aiLevel > 0.5f) Color(0xFF6A5ACD).copy(alpha = 0.8f) else Color(0xFFEEEBD0)
-        style = PaintingStyle.Fill
-    }
+    // Hand color based on AI level
+    val handColor = if (aiLevel > 0.5f) Color(0xFF6A5ACD) else Color(0xFFEEEBD0)
+    val fingerColor = if (aiLevel > 0.5f) Color(0xFF8A2BE2) else Color(0xFFEEEBD0)
+
     // Palm
     drawOval(
-        paint = handPaint,
+        color = handColor.copy(alpha = 0.8f),
         topLeft = Offset(center.x - size / 2, center.y - size * 0.6f),
         size = Size(size, size * 1.2f)
     )
-    // Fingers (simple lines/ovals)
+
+    // Fingers (4)
     val fingerCount = 4
     val fingerSpacing = size * 0.1f
     val fingerStartX = center.x - size * 0.25f
     val fingerStartY = center.y - size * 0.8f
     val fingerLength = size * 0.8f
     val fingerWidth = size * 0.12f
-    val fingerPaint = Paint().apply {
-        color = if (aiLevel > 0.5f) Color(0xFF8A2BE2).copy(alpha = 0.9f) else Color(0xFFEEEBD0)
-        style = PaintingStyle.Stroke
-        strokeWidth = fingerWidth
-        strokeCap = StrokeCap.Round
-    }
+
     for (i in 0 until fingerCount) {
         val x = fingerStartX + i * fingerSpacing
         drawLine(
-            p1 = Offset(x, fingerStartY),
-            p2 = Offset(x, fingerStartY - fingerLength),
-            paint = fingerPaint
+            color = fingerColor,
+            start = Offset(x, fingerStartY),
+            end = Offset(x, fingerStartY - fingerLength),
+            strokeWidth = fingerWidth,
+            cap = StrokeCap.Round
         )
     }
+
     // Thumb
     val thumbStartX = center.x + size * 0.1f
     val thumbStartY = center.y - size * 0.4f
     drawLine(
-        p1 = Offset(thumbStartX, thumbStartY),
-        p2 = Offset(thumbStartX + size * 0.3f, thumbStartY - size * 0.4f),
-        paint = fingerPaint
+        color = fingerColor,
+        start = Offset(thumbStartX, thumbStartY),
+        end = Offset(thumbStartX + size * 0.3f, thumbStartY - size * 0.4f),
+        strokeWidth = fingerWidth,
+        cap = StrokeCap.Round
     )
 }
