@@ -11,7 +11,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import kotlin.math.*
 
@@ -36,14 +35,6 @@ fun AvatarView(
 
     val aiLevel = maxOf(visualScore, languageScore, motorScore) / 100f
 
-    // Choose image
-    val imageRes = when (angle) {
-        FaceAngle.FRONT -> if (aiLevel > 0.5f) R.drawable.avatar_mech_front else R.drawable.avatar_real_front
-        FaceAngle.SIDE -> if (aiLevel > 0.5f) R.drawable.avatar_mech_side else R.drawable.avatar_real_side
-    }
-
-    val painter = painterResource(id = imageRes)
-
     Canvas(
         modifier = modifier
             .size(300.dp)
@@ -56,68 +47,30 @@ fun AvatarView(
             .clipToBounds()
     ) {
         val center = Offset(size.width / 2, size.height / 2)
-        val imgSize = min(size.width, size.height)
+        val r = min(size.width, size.height) / 2 * 0.8f
 
-        // Draw image
         withTransform({
             translate(center.x, center.y)
             rotate(rotation)
             scale(scale, scale)
-            translate(-imgSize / 2, -imgSize / 2)
+            translate(-r, -r)
         }) {
-            drawPicture(
-                picture = painter.picture,
-                srcOffset = androidx.compose.ui.geometry.IntOffset(0, 0),
-                srcSize = androidx.compose.ui.geometry.IntSize(painter.intrinsicSize.width.toInt(), painter.intrinsicSize.height.toInt()),
-                dstOffset = androidx.compose.ui.geometry.IntOffset.Zero,
-                dstSize = androidx.compose.ui.geometry.IntSize(imgSize.toInt(), imgSize.toInt())
-            )
-        }
-
-        // Brain overlay (semi-transparent)
-        val alpha = (aiLevel * 0.7f).coerceIn(0f, 0.7f)
-        if (alpha > 0.05f) {
-            withTransform({
-                translate(center.x, center.y)
-                rotate(rotation)
-                scale(scale, scale)
-                translate(-imgSize / 2, -imgSize / 2)
-            }) {
-                // Upper back area
-                val left = imgSize * 0.15f
-                val top = imgSize * 0.1f
-                val width = imgSize * 0.7f
-                val height = imgSize * 0.5f
-                drawRect(
-                    color = Color(0xFF00FFFF).copy(alpha = alpha * 0.5f),
-                    topLeft = Offset(left, top),
-                    size = Size(width, height)
-                )
-                // Circuit lines if AI > 0.5
-                if (aiLevel > 0.5f) {
-                    val lineColor = if (aiLevel > 0.8f) Color.Magenta.copy(alpha = alpha) else Color.Cyan.copy(alpha = alpha)
-                    val steps = 4
-                    for (i in 1..steps) {
-                        val y = top + height * i / (steps + 1)
-                        drawLine(
-                            color = lineColor,
-                            start = Offset(left + width * 0.1f, y),
-                            end = Offset(left + width * 0.9f, y),
-                            strokeWidth = 2f
-                        )
-                    }
-                }
-                // Processor block if AI > 0.85
-                if (aiLevel > 0.85f) {
-                    val procSize = imgSize * 0.15f
-                    drawRoundRect(
-                        color = Color(0xFFFFD700).copy(alpha = alpha),
-                        topLeft = Offset(imgSize * 0.425f, imgSize * 0.35f),
-                        size = Size(procSize, procSize),
-                        cornerRadius = CornerRadius(4f)
-                    )
-                }
-            }
+            // Simple head circle
+            drawOval(color = Color(0xFFEEEBD0), topLeft = Offset(0f, 0f), size = Size(r*2, r*2))
+            // Eyes
+            val eyeY = r - r*0.1f
+            val eyeXL = r - r*0.25f
+            val eyeXR = r + r*0.25f
+            val eyeR = r * 0.08f
+            drawCircle(Color.White, eyeR, Offset(eyeXL, eyeY))
+            drawCircle(Color.White, eyeR, Offset(eyeXR, eyeY))
+            val irisColor = if (aiLevel > 0.3f) Color.Cyan else Color(0xFF4A2C00)
+            drawCircle(irisColor, eyeR*0.5f, Offset(eyeXL, eyeY))
+            drawCircle(irisColor, eyeR*0.5f, Offset(eyeXR, eyeY))
+            drawCircle(Color.Black, eyeR*0.25f, Offset(eyeXL, eyeY))
+            drawCircle(Color.Black, eyeR*0.25f, Offset(eyeXR, eyeY))
+            // Mouth
+            drawOval(color = Color(0xFF8B5A2B), topLeft = Offset(r - r*0.2f, r + r*0.25f), size = Size(r*0.4f, r*0.08f))
         }
     }
 }
