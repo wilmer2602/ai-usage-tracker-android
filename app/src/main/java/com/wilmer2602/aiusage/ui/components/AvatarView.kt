@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.wilmer2602.aiusage.R
 import kotlin.math.*
 
 internal enum class FaceAngle(val value: Int) { FRONT(0), SIDE(1) }
